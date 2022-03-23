@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Quantitative Dashboard | QuantML </title>
+    <meta name="description" content="Algorithmic Quantitative Trading using Machine Learning.">
+    <meta name="author" content="Gacoka Mbui">
+    <meta property="og:title" content="QuantML">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://quantml.herokuapp.com">
+    <meta property="og:description" content="Algorithmic Quantitative Trading using Machine Learning.">
+    </head>
+    <body>
+        <p>Client: {{client}}</p>
+        {% if can_trade %}<p>Trade status: Active</p>{% else %}<p>Trade status: Inactive</p>{% endif %}
+        <p>Account Type: {{account_type}}{% if account_type in permissions %}[Permitted]{% endif %}</p>
+        <p>Time updated: {{time_updated}}</p>
+        <p>Balance:</p>
+        {% for balance_info in balances_info %}
+            <p>{{balance_info.asset}}: {{balance_info.free}}</p>
+        {% endfor %}
+        <p id="btc-price"></p>
+    </body>
+    <script>
+        var btcPrice = document.getElementById('btc-price')
+        var binanceSocket = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@trade");
+        binanceSocket.onmessage = function (event) {
+            var messageObject = JSON.parse(event.data);
+            btcPrice.innerHTML = `${messageObject['s']}: ${messageObject['p']}`
+        }
+    </script>
+</html>
