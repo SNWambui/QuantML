@@ -13,3 +13,4 @@ portfolio = vbt.Portfolio.from_signals(closing_btc_prices, entries, exits, init_
 print(portfolio.total_profit())
 print(portfolio.sharpe_ratio())
 print(portfolio.returns())
+print(dir(portfolio.plot()))
