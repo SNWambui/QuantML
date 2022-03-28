@@ -33,7 +33,7 @@ cerebro.addanalyzer(btanalyzers.Returns, _name = "returns")
 cerebro.addanalyzer(btanalyzers.DrawDown, _name = "drawdown")
 
 #Run Cerebro Engine
-print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
+print('\nStarting Portfolio Value: %.2f' % cerebro.broker.getvalue())
 results = cerebro.run(stdstats=False)
 trade_details = results[0].analyzers.trades.get_analysis()
 print_portfolio(results, trade_details)
