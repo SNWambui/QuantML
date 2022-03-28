@@ -1,30 +1,25 @@
 import backtrader as bt
-import vectorbt as vbt
 
-class Broker(bt.observers.Broker):
-    alias = ('Portfolio Value',)
-    lines = ('value',)
-    plotinfo = dict(plot=True, subplot=True)
-
-    def next(self):
-        # self.lines.cash[0] = self._owner.broker.getcash()
-        self.lines.value[0] = value = self._owner.broker.getvalue()
-
-
-class BuySellArrow(bt.observers.BuySell):
-    plotlines = dict(
-        buy=dict(marker='$\u21E7$', markersize=12.0),
-        sell=dict(marker='$\u21E9$', markersize=12.0)
-    )
-
-class TestStrategy(bt.Strategy):
+class SMA_ATR(bt.Strategy):
     def __init__(self): 
+        """Simple moving average on (14, 21) periods and ATR Backtest on (14) period.
+        
+        If there is an SMA crossover indicating a buy or sell signal, the ATR should be above 70 to place a trade.
+        The idea is that a trend reversal with a high volatility signifies a strong buying signal.
+        
+        order (obj): The order object that holds the status of a trade.
+        trade_size (float): How much capital to allocate to a trade in USD.
+        sma1 (int): A simple moving average of the last 14 candles.
+        sma2 (int): A simple moving average of the last 21 candles.
+        atr (int): A value indicating how much momentum there is in the past 14 candles.
+        crossover (int): 0 for no crossover, 1 indicating uptrend reversal and -1 indicating downtrend reversal.
+        
+        """
         self.order = None
         self.trade_size = 0
         self.sma1 = bt.ind.SMA(period=14)
         self.sma2 = bt.ind.SMA(period=21)
         self.atr = bt.ind.ATR(period=14)
-        # self.rsi = bt.indicators.RelativeStrengthIndex()
         self.crossover = bt.ind.CrossOver(self.sma1, self.sma2)
         
     def log(self, txt, dt=None):
@@ -37,7 +32,7 @@ class TestStrategy(bt.Strategy):
             return
 
         if order.status in [order.Completed]:
-            if order.isbuy():
+            if order.isbuy(): # BUY
                 self.log(
                     'BUY EXECUTED, Price: %.2f, Cost: %.2f, Comm %.2f\n' %
                     (order.executed.price,
@@ -56,14 +51,10 @@ class TestStrategy(bt.Strategy):
 
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
             self.log('Order Canceled/Margin/Rejected\n')
-
-        # Write down: no pending order
         self.order = None
 
     def notify_trade(self, trade):
-        if not trade.isclosed:
-            return
-
+        if not trade.isclosed: return
         self.log('OPERATION PROFIT - GROSS: %.2f NET: %.2f \n' %
                  (trade.pnl, trade.pnlcomm))
 
@@ -82,31 +73,3 @@ class TestStrategy(bt.Strategy):
             if (self.crossover == -1 and self.atr > 70):
                 self.sell(exectype=bt.Order.Market, price=self.data.close[0], size=self.trade_size)
                 self.log('SELL CREATE, %.2f' % self.data.close[0]) 
-    
-# Get asset's historical data
-btc_data = vbt.BinanceData.download(
-    symbols='BTCUSDT', 
-    start='10 days ago UTC', 
-    end='1 minutes ago UTC', 
-    interval='5m', 
-    show_progress=False).get()
-
-data = bt.feeds.PandasData(dataname=btc_data)
-
-#Instantiate Cerebro engine
-cerebro = bt.Cerebro()
-cerebro.broker.setcash(100.0)
-cerebro.broker.setcommission(commission=0.001) 
-cerebro.broker.set_slippage_perc(0.005)
-
-# Add the data and strategy
-cerebro.adddata(data)
-cerebro.addstrategy(TestStrategy)
-cerebro.addobserver(BuySellArrow)
-cerebro.addobserver(Broker)
-
-#Run Cerebro Engine
-print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
-cerebro.run(stdstats=False)
-print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
-cerebro.plot()
