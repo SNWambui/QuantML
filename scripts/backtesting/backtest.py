@@ -1,6 +1,8 @@
 import backtrader as bt
 import vectorbt as vbt
-from strategies.strategy_1 import SMA_ATR
+import backtrader.analyzers as btanalyzers
+from displays import print_portfolio
+from strategies.default import BuyAndHold
 from observers import Broker, BuySellArrow
 
 # Get asset's historical data
@@ -21,12 +23,19 @@ cerebro.broker.set_slippage_perc(0.005)
 
 # Add the data and strategy
 cerebro.adddata(data)
-cerebro.addstrategy(SMA_ATR)
+cerebro.addstrategy(BuyAndHold)
 cerebro.addobserver(BuySellArrow)
 cerebro.addobserver(Broker)
+cerebro.addanalyzer(btanalyzers.SharpeRatio, riskfreerate=0.0, _name = "sharpe")
+cerebro.addanalyzer(btanalyzers.Transactions, _name = "trans")
+cerebro.addanalyzer(btanalyzers.TradeAnalyzer, _name = "trades")
+cerebro.addanalyzer(btanalyzers.Returns, _name = "returns")
+cerebro.addanalyzer(btanalyzers.DrawDown, _name = "drawdown")
 
 #Run Cerebro Engine
 print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
-cerebro.run(stdstats=False)
+results = cerebro.run(stdstats=False)
+trade_details = results[0].analyzers.trades.get_analysis()
+print_portfolio(results, trade_details)
 print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
-cerebro.plot()
+# cerebro.plot()
