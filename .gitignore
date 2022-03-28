@@ -4,3 +4,4 @@
 /django
 .venv
 /venv
+__pycache__/
