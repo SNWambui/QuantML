@@ -1,6 +1,6 @@
 import backtrader as bt
 
-class Broker(bt.observers.Broker):
+class Broker(bt.observer.Observer):
     alias = ('Portfolio Value',)
     lines = ('value',)
     plotinfo = dict(plot=True, subplot=True)
